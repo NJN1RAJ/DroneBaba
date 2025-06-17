@@ -11,7 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { api } from '@/api/api';
-import { useRefreshOnFocus } from '@/components/refresh';
 
 type Drone = {
   _id: string;
@@ -21,7 +20,7 @@ type Drone = {
   pricePerAcre: string;
   durability: string;
   purchasedDate: string;
-  isNGO: string; // Updated to string to match API response
+  isNGO: string;
   ngoName?: string;
   schedule: Array<{ date: string; timeSlot: string }>;
 };
@@ -52,7 +51,7 @@ export default function DronesListScreen() {
   );
 
   const renderDroneItem = ({ item }: { item: Drone }) => {
-    console.log('🛸 Rendering drone:', item); // Debug log for each item
+    console.log('🛸 Rendering drone:', item);
     return (
       <View style={styles.droneItem}>
         <Text style={styles.droneName}>{item.name}</Text>
@@ -66,11 +65,18 @@ export default function DronesListScreen() {
         <Text style={styles.droneDetail}>
           NGO: {item.isNGO === 'yes' ? (item.ngoName || 'Yes') : 'No'}
         </Text>
-        <Text style={styles.droneDetail}>
-          Schedules: {Array.isArray(item.schedule) && item.schedule.length > 0
-            ? item.schedule.map((s, index) => `${s.date} (${s.timeSlot})`).join(', ')
-            : 'None'}
-        </Text>
+        <View style={styles.scheduleContainer}>
+          <Text style={styles.scheduleLabel}>Schedules:</Text>
+          {Array.isArray(item.schedule) && item.schedule.length > 0 ? (
+            item.schedule.map((s, index) => (
+              <Text key={`${s.date}-${s.timeSlot}-${index}`} style={styles.scheduleItem}>
+                • {s.date} ({s.timeSlot})
+              </Text>
+            ))
+          ) : (
+            <Text style={styles.scheduleItem}>None</Text>
+          )}
+        </View>
       </View>
     );
   };
@@ -119,6 +125,20 @@ const styles = StyleSheet.create({
   },
   droneName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   droneDetail: { fontSize: 14, color: '#666', marginTop: 5 },
+  scheduleContainer: {
+    marginTop: 5,
+  },
+  scheduleLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  scheduleItem: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+    marginLeft: 10,
+  },
   floatingButton: {
     position: 'absolute',
     bottom: 20,

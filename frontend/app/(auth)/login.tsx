@@ -58,7 +58,7 @@ export default function LoginScreen() {
         router.replace({ pathname: '/drone-owner/(tabs)/dhome'});
       } else if (role === 'Pilot') {
         // router.replace({ pathname: '/Pilot/pilotHome', params: { userId: user._id.toString() } });
-        router.replace({ pathname: '/Pilot/pilotHome'});
+        router.replace({ pathname: '/Pilot/(tabs)/pilotHome'});
       } else {
         setError('Invalid role');
       }

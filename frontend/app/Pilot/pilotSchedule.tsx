@@ -1,53 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { api } from '@/api/api';
 
-// Mock database for pilot schedule (replace with your actual database implementation)
-const PilotDB = () => ({
-  fetchPilotSchedule: async (pilotId: string) => {
-    // Mock data - replace with actual database query
-    return [
-      {
-        id: 'B001',
-        date: '2025-03-26',
-        time: '08:00 AM',
-        location: 'Nagpur, Maharashtra',
-        farmArea: '5 Acre',
-        droneName: 'DJI Agras T30',
-        status: 'Accepted',
-      },
-      {
-        id: 'B002',
-        date: '2025-03-27',
-        time: '09:00 AM',
-        location: 'Pune, Maharashtra',
-        farmArea: '3 Acre',
-        droneName: 'DJI Mavic 2',
-        status: 'Accepted',
-      },
-    ];
-  },
-});
+type ScheduleItem = {
+  date: string;
+  timeSlot: string;
+  job: {
+    _id: string;
+    farmLocation: string;
+    payDetails: string;
+    droneId: { name: string };
+    farmArea?: string; // Optional field for farm area
+    farmerMobile?: string; // Optional field for farmer's WhatsApp number
+  };
+};
 
 export default function PilotScheduleScreen() {
-  const [schedule, setSchedule] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const router = useRouter();
-  const pilotId = 'P001'; // Replace with actual pilot ID
 
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const pilotDB = PilotDB();
-        const pilotSchedule = await pilotDB.fetchPilotSchedule(pilotId);
-        setSchedule(pilotSchedule);
-      } catch (err) {
+        const pilotSchedule = await api.getPilotSchedule();
+        // Sort by date in ascending order
+        const sortedSchedule = (pilotSchedule || []).sort((a: ScheduleItem, b: ScheduleItem) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        setSchedule(sortedSchedule);
+      } catch (err: any) {
         console.error('Error fetching pilot schedule:', err);
       }
     };
 
     fetchSchedule();
-  }, [pilotId]);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -65,22 +54,21 @@ export default function PilotScheduleScreen() {
         {schedule.length === 0 ? (
           <Text style={styles.noSchedule}>No upcoming bookings in your schedule.</Text>
         ) : (
-          schedule.map(item => (
-            <View key={item.id} style={styles.card}>
+          schedule.map((item, index) => (
+            <View key={`${item.job._id}-${index}`} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{item.date}</Text>
                 <MaterialCommunityIcons
-                  name={item.status === 'Completed' ? 'check-circle' : 'clock'}
+                  name="check-circle"
                   size={24}
-                  color={item.status === 'Completed' ? '#2ECC71' : '#E74C3C'}
+                  color="#2ECC71"
                 />
               </View>
               <Text style={styles.cardDetails}>
-                Time: {item.time}{'\n'}
-                Location: {item.location}{'\n'}
-                Farm Area: {item.farmArea}{'\n'}
-                Drone: {item.droneName}{'\n'}
-                Status: {item.status}
+                Time: {item.timeSlot}{'\n'}
+                Location: <Text style={styles.mapText} onPress={() => Linking.openURL(`https://maps.google.com/?q=${item.job.farmLocation}`)}>📍 Open Map</Text>{'\n'}
+                Farm Area: {item.job.farmArea || '0 Acre'}{'\n'}
+                Drone: {item.job.droneId.name}
               </Text>
             </View>
           ))
@@ -150,5 +138,10 @@ const styles = StyleSheet.create({
   cardDetails: {
     fontSize: 14,
     color: '#555',
+  },
+  mapText: {
+    fontSize: 14,
+    color: '#3498DB',
+    fontWeight: '600',
   },
 });

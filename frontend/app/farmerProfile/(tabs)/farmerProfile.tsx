@@ -20,7 +20,6 @@ export default function FarmerProfileScreen() {
     _id: '',
     name: '',
     email: '',
-    password: '',
     role: 'Farmer',
     city: '',
     address: '',
@@ -43,8 +42,23 @@ export default function FarmerProfileScreen() {
         const user = await api.getUser();
         console.log("User:", user);
 
-        const location = await api.getUserLocationDetails();
-        console.log("Location:", location);
+        let location = {};
+        try {
+          location = await api.getUserLocationDetails();
+          console.log("Location:", location);
+        } catch (err: any) {
+          console.log('No location details found:', err.message);
+          location = {
+            address: '',
+            taluka: '',
+            pinCode: '',
+            state: '',
+            whatsapp_number: '',
+            pan_number: '',
+            aadhar_number: '',
+            contact_number: '',
+          };
+        }
 
         const combinedData = { ...user, ...location };
         setProfileData(combinedData);
@@ -68,8 +82,8 @@ export default function FarmerProfileScreen() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const { name, email, password, city } = profileData;
-      await api.updateUser({ name, email, password, city });
+      const { name, email, city } = profileData;
+      await api.updateUser({ name, email, city });
 
       const locationDetails = {
         address: profileData.address,
@@ -115,7 +129,7 @@ export default function FarmerProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Farmer Profile</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={async () => { await api.logout(); router.replace('/(auth)/login'); }}>
+        <TouchableOpacity style={styles.logoutButton} onPress={async () => { await api.logout(); await AsyncStorage.clear(); router.replace('/(auth)/login'); }}>
           <MaterialCommunityIcons name="logout" size={24} color="#dc3545" />
         </TouchableOpacity>
       </View>
@@ -134,7 +148,6 @@ export default function FarmerProfileScreen() {
           </View>
           {renderField('Name', 'name', 'account', true)}
           {renderField('Email', 'email', 'email', true)}
-          {renderField('Password', 'password', 'lock', true)}
           {renderField('Role', 'role', 'account-group', false)}
           {renderField('City', 'city', 'city', true)}
           <TouchableOpacity style={styles.saveButton} onPress={() => setEditing(!editing)}>
@@ -159,7 +172,7 @@ export default function FarmerProfileScreen() {
         {renderField('Contact No', 'contact_number', 'phone', true)}
         {!loading && !error && (
           <TouchableOpacity style={styles.editDataButton} onPress={() => router.push('/locDetails')}>
-            <Text style={styles.editDataButtonText}>Edit Data</Text>
+            <Text style={styles.editDataButtonText}>Edit Dataa</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

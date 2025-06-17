@@ -11,19 +11,17 @@ export default function AddDrone() {
   const [pricePerAcre, setPricePerAcre] = useState('');
   const [durability, setDurability] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
-  const [isNGOSupported, setIsNGOSupported] = useState<'yes' | 'no' | null>(null); // Changed to string type
+  const [isNGOSupported, setIsNGOSupported] = useState<'yes' | 'no' | null>(null);
   const [ngoName, setNgoName] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleAddDrone = async () => {
-    // Validate all required fields
     if (!droneName || !droneType || !capacity || !pricePerAcre || !durability || !purchaseDate || isNGOSupported === null) {
       Alert.alert('Error', 'All fields except NGO Name (if not NGO) are required!');
       return;
     }
 
-    // Validate purchase date format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(purchaseDate)) {
       Alert.alert('Error', 'Please enter a valid date in YYYY-MM-DD format (e.g., 2025-04-09)');
@@ -39,7 +37,7 @@ export default function AddDrone() {
         pricePerAcre,
         durability,
         purchasedDate: purchaseDate,
-        isNGO: isNGOSupported, // Sending "yes" or "no" as string
+        isNGO: isNGOSupported,
         ngoName: isNGOSupported === 'yes' ? ngoName : undefined,
       };
       // @ts-ignore
@@ -179,13 +177,13 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#007bff',
+    borderColor: '#2ECC71', // Changed to green to match theme
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 5,
   },
   radioSelected: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#2ECC71', // Changed to green
   },
   radioInnerCircle: {
     height: 10,
@@ -194,7 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#2ECC71', // Changed from #007bff to green
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -210,13 +208,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   cancelButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: '#fff', // Changed from #dc3545 to white
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2ECC71', // Added green border
   },
   cancelButtonText: {
-    color: '#fff',
+    color: '#2ECC71', // Changed to green to match theme
     fontSize: 16,
     fontWeight: '500',
   },

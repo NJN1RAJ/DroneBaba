@@ -1,53 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Linking } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { api } from '@/api/api';
 
-// Mock database for pilot bookings (replace with your actual database implementation)
-const PilotDB = () => ({
-  fetchPilotBookings: async (pilotId: string) => {
-    // Mock data - replace with actual database query
-    return [
-      {
-        id: 'B001',
-        pilotId: 'P001',
-        farmerId: 'F001',
-        farmArea: '5 Acre',
-        date: '2025-03-26',
-        time: '08:00 AM',
-        status: 'Accepted',
-        location: 'Nagpur, Maharashtra',
-        mapLink: 'https://maps.app.goo.gl/16MGbR9QGimPu9tb8',
-        droneName: 'DJI Agras T30',
-      },
-      {
-        id: 'B002',
-        pilotId: 'P001',
-        farmerId: 'F002',
-        farmArea: '3 Acre',
-        date: '2025-03-27',
-        time: '09:00 AM',
-        status: 'Accepted',
-        location: 'Pune, Maharashtra',
-        mapLink: 'https://maps.app.goo.gl/w6CPAPLb7J6dBGyL8',
-        droneName: 'DJI Mavic 2',
-      },
-    ];
-  },
-});
+type Booking = {
+  date: string;
+  timeSlot: string;
+  job: {
+    _id: string;
+    farmLocation: string;
+    payDetails: string;
+    droneId: { name: string };
+    farmArea?: string; // Optional field for farm area
+    farmerMobile?: string; // Optional field for farmer's WhatsApp number
+  };
+};
 
 export default function PilotHomeScreen() {
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const router = useRouter();
-  const pilotId = 'P001'; // Replace with actual pilot ID (e.g., from auth context)
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const pilotDB = PilotDB();
-        const pilotBookings = await pilotDB.fetchPilotBookings(pilotId);
-        setBookings(pilotBookings);
-      } catch (err) {
+        const pilotSchedule = await api.getPilotSchedule();
+        // Get the current date dynamically in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+        const todayBookings = (pilotSchedule || []).filter((booking: Booking) => booking.date === today);
+        setBookings(todayBookings);
+      } catch (err: any) {
         console.error('Error fetching pilot bookings:', err);
       }
     };
@@ -55,14 +37,14 @@ export default function PilotHomeScreen() {
     fetchBookings();
     const interval = setInterval(fetchBookings, 60000); // Refresh every minute
     return () => clearInterval(interval);
-  }, [pilotId]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Pilot Dashboard</Text>
-        <View style={{ flexDirection: 'row', }}>
+        <View style={{ flexDirection: 'row' }}>
           <TouchableOpacity style={{ marginRight: 10 }}>
             <MaterialIcons name="notifications" size={28} color="#333" />
           </TouchableOpacity>
@@ -73,32 +55,35 @@ export default function PilotHomeScreen() {
       </View>
 
       {/* Title */}
-      <Text style={styles.title}>Assigned Bookings</Text>
+      <Text style={styles.title}>Assigned Bookings (Today)</Text>
 
       {/* Bookings List */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {bookings.length === 0 ? (
-          <Text style={styles.noBookings}>No assigned bookings available.</Text>
+          <Text style={styles.noBookings}>No assigned bookings for today.</Text>
         ) : (
-          bookings.map(booking => (
+          bookings.map((booking, index) => (
             <TouchableOpacity
-              key={booking.id}
+              key={`${booking.job._id}-${index}`}
               style={styles.card}
               onPress={() =>
                 router.push({
                   pathname: '/Pilot/pilotBooking',
-                  params: { bookingId: booking.id },
+                  params: { bookingId: booking.job._id },
                 })
               }
             >
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{booking.location}</Text>
+                <TouchableOpacity onPress={() => Linking.openURL(`https://maps.google.com/?q=${booking.job.farmLocation}`)}>
+                  <Text style={styles.mapText}>📍 Open Map</Text>
+                </TouchableOpacity>
                 <MaterialCommunityIcons name="drone" size={24} color="#2ECC71" />
               </View>
               <Text style={styles.cardDetails}>
-                Farm Area: {booking.farmArea}{'\n'}
-                Date & Time: {booking.date} at {booking.time}{'\n'}
-                Drone: {booking.droneName}
+                Farm Area: {booking.job.farmArea || '0 Acre'}{'\n'}
+                📅 Date: {booking.date} ⌛Time: {booking.timeSlot}{'\n'}
+                Drone: {booking.job.droneId.name}{'\n'}
+                Payment: ₹ {booking.job.payDetails}
               </Text>
             </TouchableOpacity>
           ))
@@ -133,6 +118,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    // marginTop: 20,
   },
   headerTitle: {
     fontSize: 20,
@@ -173,13 +159,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  mapText: {
+    fontSize: 16,
+    color: '#3498DB',
+    fontWeight: '600',
   },
   cardDetails: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#555',
   },
   fab: {

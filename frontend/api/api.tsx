@@ -180,21 +180,6 @@ const api = {
     }
   },
 
-  deleteSchedule: async (droneId: string, date: string, timeSlot: string) => {
-    try {
-      const token = await AsyncStorage.getItem('access_token');
-      if (!token) throw new Error('No token found. Please log in.');
-      const response = await axios.post(
-        `${API_URL}/api/v1/drone/deleteSchedule/${droneId}`,
-        { date, timeSlot },
-        { headers: { Authorization: token } }
-      );
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to delete schedule.');
-    }
-  },
-
   getAllDrones: async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
@@ -207,19 +192,200 @@ const api = {
       throw new Error(error.response?.data?.message || 'Failed to fetch all drones.');
     }
   },
-  
-  createSchedule: async (droneId: string, scheduleData: { date: string; timeSlot: string }) => {
+
+  createJob: async (jobData: {
+    droneId: string;
+    cropId: string;
+    date: string;
+    time: string;
+    price: string;
+  }) => {
     try {
       const token = await AsyncStorage.getItem('access_token');
       if (!token) throw new Error('No token found. Please log in.');
-      const response = await axios.post(`${API_URL}/api/v1/drone/createSchedule/${droneId}`, scheduleData, {
+      console.log('Creating job with data:', jobData);
+      const response = await axios.post(
+        `${API_URL}/api/v1/jobs/createJob/${jobData.droneId}/${jobData.cropId}`,
+        {
+          date: jobData.date,
+          timeSlot: jobData.time,
+          price: jobData.price, // Convert price to string
+        },
+        {
+          headers: { Authorization: token },
+        }
+      );
+      console.log('Create job response:', response.data);
+      return response.data.job._id;
+    } catch (error: any) {
+      console.error('Create job error:', error.response?.data || error);
+      throw new Error(error.response?.data?.message || 'Failed to create job.');
+    }
+  },
+
+  createSchedule: async (droneId: string, jobId: string) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      console.log('Creating schedule with droneId:', droneId, 'and jobId:', jobId);
+      const response = await axios.post(`${API_URL}/api/v1/schedule/createSchedule/${droneId}/${jobId}`, {}, {
         headers: { Authorization: token },
       });
-      return response.data; // Expecting { message: "Schedule Booked Successfully" }
+      return response.data; // Expecting { message: "Schedule booked and job accepted successfully" }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to create schedule.');
     }
   },
+
+  getJobs: async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.get(`${API_URL}/api/v1/jobs/getJobs`, {
+        headers: { Authorization: token },
+      });
+      return response.data.jobs; // Array of jobs
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch jobs.');
+    }
+  },
+
+  getUpdates: async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.get(`${API_URL}/api/v1/job/getUpdates`, {
+        headers: { Authorization: token },
+      });
+      return response.status === 204 ? null : response.data; // Returns { newJobs } or null if 204
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch updates.');
+    }
+  },
+
+  createCrop: async (cropData: {
+    name: string;
+    area: string;
+    type: string;
+    season: string;
+    prevCropName: string;
+    farmLocation: string;
+    farmName: string;
+  }) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      console.log('Token for createCrop:', token); // Add this log
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.post(`${API_URL}/api/v1/crop/createCrop`, cropData, {
+        headers: { Authorization: token },
+      });
+      return response.data; // Expecting { message: "Crop added successfully", cropId: string }
+    } catch (error: any) {
+      console.error('createCrop error:', error.response?.data || error.message); // Add this log
+      throw new Error(error.response?.data?.message || 'Failed to create crop.');
+    }
+  },
+
+  getCrop: async (cropId: string) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.get(`${API_URL}/api/v1/crop/${cropId}`, {
+        headers: { Authorization: token },
+      });
+      return response.data.crop; // Expecting crop object
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch crop.');
+    }
+  },
+
+  getAllCrops: async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.get(`${API_URL}/api/v1/crop/getAllCrops`, {
+        headers: { Authorization: token },
+      });
+      return response.data.crops; // Expecting array of crops
+    } catch (error: any) {
+      throw new Error(error.response?.data);
+    }
+  },
+
+  getPilotSchedule: async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.get(`${API_URL}/api/v1/drone/getScheduleOfPilot`, {
+        headers: { Authorization: token },
+      });
+      return response.data.schedule; // Array of schedule entries
+    } catch (error: any) {
+      if (error.response) {
+        // Server responded with a status code outside 2xx
+        // console.error('getPilotSchedule Error Response:', error.response.data);
+        throw new Error(error.response.data.message || 'Failed to fetch pilot schedule.');
+      } else if (error.request) {
+        // No response received
+        // console.error('getPilotSchedule Error Request:', error.request);
+        throw new Error('No response received from server.');
+      } else {
+        // Error setting up the request
+        // console.error('getPilotSchedule Error Message:', error.message);
+        throw new Error(error.message || 'Failed to fetch pilot schedule.');
+      }
+    }
+  },
+
+  getDroneSchedule: async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.get(`${API_URL}/api/v1/drone/getScheduleOfDrone`, {
+        headers: { Authorization: token },
+      });
+      return response.data.schedule; // Array of schedule entries
+    } catch (error: any) {
+      if (error.response) {
+        // console.error('getDroneSchedule Error Response:', error.response.data);
+        throw new Error(error.response.data.message || 'Failed to fetch drone schedule.');
+      } else if (error.request) {
+        // console.error('getDroneSchedule Error Request:', error.request);
+        throw new Error('No response received from server.');
+      } else {
+        // console.error('getDroneSchedule Error Message:', error.message);
+        throw new Error(error.message || 'Failed to fetch drone schedule.');
+      }
+    }
+  },
+
+  deleteSchedule: async (droneId: string, date: string, timeSlot: string) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      // console.log("❌",date, timeSlot, "❌")
+      if (!token) throw new Error('No token found. Please log in.');
+      const response = await axios.delete(
+      `${API_URL}/api/v1/drone/deleteSchedule/${droneId}`,
+      {
+        headers: { Authorization: token },
+        data: { date, timeSlot }, // Pass date and timeSlot as query parameters
+      }
+    );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        // console.error('deleteSchedule Error Response:', error.response.data);
+        throw new Error(error.response.data.message || 'Failed to delete schedule.');
+      } else if (error.request) {
+        // console.error('deleteSchedule Error Request:', error.request);
+        throw new Error('No response received from server.');
+      } else {
+        // console.error('deleteSchedule Error Message:', error.message);
+        throw new Error(error.message || 'Failed to delete schedule.');
+      }
+    }
+  },
+
 };
 
 export { api };

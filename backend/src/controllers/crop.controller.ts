@@ -111,7 +111,7 @@ export const getAllCrops = async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(401).json({
+    res.status(200).json({
       crops: farmer.crops,
     });
     return;

@@ -12,8 +12,8 @@ export default function DroneOwnerLayout() {
   })
 
   return (
-    <Stack initialRouteName="pilotHome" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="pilotHome" />
+    <Stack initialRouteName="pilotBooking" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="pilotBooking" />
     </Stack>
   );
 }

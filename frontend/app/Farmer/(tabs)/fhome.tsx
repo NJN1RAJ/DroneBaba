@@ -33,7 +33,6 @@ export default function FarmerDashboard() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // Fetch user data on mount using the token
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -49,27 +48,40 @@ export default function FarmerDashboard() {
     fetchUserData();
   }, []);
 
-  // Fetch all drones and their schedules
   useEffect(() => {
     const fetchDronesAndSchedules = async () => {
       try {
         const dronesData = await api.getAllDrones();
         console.log('✅ Fetched drones:', dronesData);
 
-        const schedulesData = await api.getSchedulesOfDroneOwner();
-        console.log('✅ Fetched schedules:', schedulesData);
+        // Validate pricePerAcre for each drone
+        dronesData.forEach((drone: Drone) => {
+          // console.log(`Drone ${drone.name} pricePerAcre:`, drone.pricePerAcre);
+          if (!drone.pricePerAcre || drone.pricePerAcre === '0') {
+            // console.warn(`Warning: pricePerAcre for drone ${drone.name} is invalid: ${drone.pricePerAcre}`);
+          }
+        });
+
+        let schedulesData = [];
+        try {
+          schedulesData = await api.getSchedulesOfDroneOwner();
+          console.log('✅ Fetched schedules:', schedulesData);
+        } catch (err: any) {
+          // console.warn('No schedules found, proceeding with empty schedules:', err.message);
+          schedulesData = [];
+        }
 
         const dronesWithSchedules = dronesData.map((drone: Drone) => {
           const droneSchedules = schedulesData
             .filter((schedule: any) => schedule.DroneName === drone.name)
             .flatMap((schedule: any) => schedule.DroneSchedule);
-          return { ...drone, schedules: droneSchedules };
+          return { ...drone, schedules: droneSchedules || [] };
         });
 
         setDrones(dronesWithSchedules);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch drones or schedules.');
-        console.error('Drones/Schedules fetch error:', err);
+        setError(err.message || 'Failed to fetch drones.');
+        console.error('Drones fetch error:', err);
       } finally {
         setLoading(false);
       }
@@ -77,11 +89,10 @@ export default function FarmerDashboard() {
     fetchDronesAndSchedules();
   }, []);
 
-  // Set the selected date to 3 days after the current date when the component mounts
   useEffect(() => {
     const currentDate = new Date();
     const minDate = new Date(currentDate);
-    minDate.setDate(currentDate.getDate() + 1);
+    minDate.setDate(currentDate.getDate() + 2);
     const formattedDate = minDate.toISOString().split('T')[0];
     setSelectedDate(formattedDate);
   }, []);
@@ -90,7 +101,7 @@ export default function FarmerDashboard() {
     const dates = [];
     const currentDate = new Date();
     const startDate = new Date(currentDate);
-    startDate.setDate(currentDate.getDate() + 3);
+    startDate.setDate(currentDate.getDate() + 2);
     const endDate = new Date(currentDate);
     endDate.setDate(currentDate.getDate() + 21);
 
@@ -147,7 +158,7 @@ export default function FarmerDashboard() {
           <View style={styles.modalContent}>
             <MaterialCommunityIcons name="clock" size={40} color="#2ECC71" style={styles.modalIcon} />
             <Text style={styles.modalTitle}>Booking in Progress</Text>
-            <Text style={styles.modalMessage}>Your drone booking is being processed. You will be notified soon.</Text>
+            <Text style={styles.modalMessage}>Your booking will be confirmed shortly.</Text>
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => setModalVisible(false)}
@@ -208,7 +219,9 @@ export default function FarmerDashboard() {
                     <Text style={styles.droneName}>{drone.name}</Text>
                     <Text style={styles.pilotName}>Pilot: Pilot Name</Text>
                     <Text style={styles.droneAddress}>Type: {drone.type}</Text>
-                    <Text style={styles.dronePrice}>Price: ${drone.pricePerAcre} per acre</Text>
+                    <Text style={styles.dronePrice}>
+                      Price: ${drone.pricePerAcre === '0' ? 'Not set' : drone.pricePerAcre} per acre
+                    </Text>
                   </View>
                 </TouchableOpacity>
                 <View style={styles.slotsContainer}>
@@ -220,14 +233,18 @@ export default function FarmerDashboard() {
                         key={index}
                         style={styles.slotButton}
                         onPress={() => {
-                          console.log(`Selected drone ${drone.name} on ${selectedDate} at ${slot.time}`);
+                          if (drone.pricePerAcre === '0') {
+                            alert('Price not set for this drone. Please contact the admin.');
+                            return;
+                          }
+                          console.log(`Navigating with pricePerAcre: ${drone.pricePerAcre}`);
                           router.push({
-                            pathname: '/Farmer/selectFarm',
+                            pathname: '/Farmer/pricing',
                             params: { 
                               droneId: drone._id, 
-                              date: selectedDate, // Changed to match FarmSelectionScreen
-                              time: slot.time,    // Changed to match FarmSelectionScreen
-                              pricePerAcre: drone.pricePerAcre
+                              date: selectedDate,
+                              time: slot.time,
+                              pricePerAcre: drone.pricePerAcre,
                             },
                           });
                         }}

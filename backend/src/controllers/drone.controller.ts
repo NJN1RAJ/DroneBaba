@@ -197,13 +197,12 @@ export const deleteSchedule = async (req: Request, res: Response) => {
 };
 
 export const getAllDrones = async (req: Request, res: Response) => {
-  //farmer perspective
   //@ts-ignore
   const userId = req.user;
 
   try {
     const drones = await DroneInfoModel.find().select(
-      "name type capacity durability"
+      "name type capacity durability pricePerAcre"
     );
 
     res.status(200).json({
@@ -218,7 +217,6 @@ export const getAllDrones = async (req: Request, res: Response) => {
 };
 
 export const getScheduleOfDrone = async (req: Request, res: Response) => {
-  //koi bhi call krskta hai aur jaan skta hai schedule of drone
   const droneId = req.params.droneId;
   try {
     const drone = await DroneInfoModel.findById(droneId);

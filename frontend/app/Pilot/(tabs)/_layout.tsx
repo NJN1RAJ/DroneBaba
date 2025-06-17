@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
@@ -17,19 +17,19 @@ export default function TabLayout() {
         }),
       }}>
       <Tabs.Screen
-        name="drone-owner-Profile"
+        name="pilotHome"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={30} color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="home" size={30} color={color} />,
         }}
       />
-      {/* <Tabs.Screen
-        name="droneDeatils"
+      <Tabs.Screen
+        name="pilotJobs"
         options={{
-          title: 'Drone Deatils',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="drone" size={30} color={color} />,
+          title: 'Jobs',
+          tabBarIcon: ({ color }) => <MaterialIcons name="work" size={30} color={color} />,
         }}
-      /> */}
+      />
     </Tabs>
   );
 }

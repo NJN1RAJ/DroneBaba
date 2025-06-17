@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import WebView from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Dimensions } from 'react-native';
@@ -10,6 +10,15 @@ const { height } = Dimensions.get('window');
 
 export default function MapScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const { droneId, date, time, pricePerAcre } = params;
+
+    // Fallback values to prevent undefined errors
+    const droneIdSafe = droneId as string || '';
+    const selectedDate = date as string || '';
+    const slotTime = time as string || '';
+    const pricePerAcreSafe = pricePerAcre as string || '0';
+
     const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
     const webViewRef = useRef<WebView>(null);
 
@@ -90,7 +99,16 @@ export default function MapScreen() {
     const handleDone = () => {
         if (coordinates) {
             console.log("Selected Coordinates:", coordinates);
-            router.replace({ pathname: "/Farmer/selectFarm", params: { coordinates: JSON.stringify(coordinates) } });
+            router.replace({ 
+                pathname: "/Farmer/pricing", 
+                params: { 
+                    coordinates: JSON.stringify(coordinates),
+                    droneId: droneIdSafe,
+                    date: selectedDate,
+                    time: slotTime,
+                    pricePerAcre: pricePerAcreSafe,
+                } 
+            });
         } else {
             router.back(); // Return without coordinates if none selected
         }

@@ -67,7 +67,7 @@ export default function AddLocationDetailsScreen() {
       // Make API call
       await api.saveLocationDetails(locationData);
       Alert.alert('Success', 'Location details saved successfully!');
-      router.push('/drone-owner/(tabs)/dhome'); // Navigate back after success
+      router.back(); // Navigate back after success
     } catch (err: any) {
       setError(err.message || 'Failed to save location details.');
     } finally {

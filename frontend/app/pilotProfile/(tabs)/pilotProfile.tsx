@@ -41,15 +41,23 @@ export default function PilotProfileScreen() {
     const fetchData = async () => {
       try {
         const user = await api.getUser();
+        console.log("User:", user);
+
         const location = await api.getUserLocationDetails();
-        setProfileData({ ...user, ...location });
+        console.log("Location:", location);
+
+        const combinedData = { ...user, ...location };
+        setProfileData(combinedData);
+
         await AsyncStorage.setItem('currentUser', JSON.stringify({ ...user, id: user._id.toString() }));
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch profile data.');
+        console.log('Error in fetchData:', err);
+        setError('Failed to fetch profile data.');
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -97,20 +105,17 @@ export default function PilotProfileScreen() {
             editable={editing}
           />
         ) : (
-          <Text style={styles.fieldValue}>{profileData[field] || 'N/A'}</Text>
+          <Text style={styles.fieldValue}>{profileData[field] || ''}</Text>
         )}
       </View>
     </View>
   );
 
-  if (loading) return <Text style={styles.loadingText}>Loading...</Text>;
-  if (error) return <Text style={styles.errorText}>{error}</Text>;
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Pilot Profile</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={async () => { await api.logout(); router.replace('/(auth)/login'); }}>
+        <TouchableOpacity style={styles.logoutButton} onPress={async () => { await api.logout(); await AsyncStorage.clear(); router.replace('/(auth)/login'); }}>
           <MaterialCommunityIcons name="logout" size={24} color="#dc3545" />
         </TouchableOpacity>
       </View>
@@ -152,6 +157,11 @@ export default function PilotProfileScreen() {
         {renderField('PAN No', 'pan_number', 'card-account-details', true)}
         {renderField('Aadhar No', 'aadhar_number', 'card-account-details-outline', true)}
         {renderField('Contact No', 'contact_number', 'phone', true)}
+        {!loading && !error && (
+          <TouchableOpacity style={styles.editDataButton} onPress={() => router.push('/locDetails')}>
+            <Text style={styles.editDataButtonText}>Edit Data</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -219,6 +229,12 @@ const styles = StyleSheet.create({
   logoutButton: {
     padding: 5,
   },
-  loadingText: { textAlign: 'center', fontSize: 16, color: '#666', marginTop: 20 },
-  errorText: { textAlign: 'center', fontSize: 16, color: '#E74C3C', marginTop: 20 },
+  editDataButton: {
+    backgroundColor: '#2ECC71',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  editDataButtonText: { color: '#FFF', fontSize: 16, fontWeight: '500' },
 });
