@@ -37,7 +37,7 @@ export const addDrone = async (req: Request, res: Response) => {
     return;
   }
 
-  if (userRole !== "Drone Owner") {
+  if (userRole === "Farmer" || userRole === "Pilot") {
     res.status(401).json({
       message: "Only drone owners are allowed to add drones",
     });
@@ -81,9 +81,10 @@ export const getDroneDetails = async (req: Request, res: Response) => {
 
   try {
     const userRole = await userModel.findById(userId).select("role");
-    if (userRole?.role !== "Drone Owner") {
+    if (userRole?.role === "Farmer" || userRole?.role === "Pilot") {
       res.status(403).json({
-        message: "Only drone owners are allowed to fetch the details",
+        message:
+          "Only drone owners and admins are allowed to fetch the details",
       });
       return;
     }
@@ -261,5 +262,42 @@ export const getScheduleOfPilot = async (req: Request, res: Response) => {
       message: "Internal Server Error",
     });
     return;
+  }
+};
+
+export const updateDroneDetails = async (req: Request, res: Response) => {
+  const droneId = req.params.droneId;
+  const { pricePerAcre } = req.body;
+  //@ts-ignore
+  const userId = req.user;
+
+  if (!pricePerAcre) {
+    res.status(404).json({
+      message: "Please fill all the required fields",
+    });
+    return;
+  }
+
+  try {
+    const drone = await DroneInfoModel.findById(droneId);
+    if (!drone) {
+      res.status(404).json({
+        message: "Drone not found",
+      });
+      return;
+    }
+
+    drone.pricePerAcre = pricePerAcre;
+
+    await drone.save();
+
+    res.status(200).json({
+      message: "Drone details updated successfully",
+      drone,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error " + error,
+    });
   }
 };

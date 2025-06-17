@@ -60,9 +60,9 @@ export const createJob = async (req: Request, res: Response) => {
     }
 
     //@ts-ignore
-    if (user.userId?.role !== "Farmer") {
+    if (user.userId?.role === "Drone Owner" || user.userId?.role === "Pilot") {
       res.status(400).json({
-        message: "Only farmers are allowed to create jobs",
+        message: "Only farmers and admins are allowed to create jobs",
       });
       return;
     }

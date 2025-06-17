@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["Farmer", "Pilot", "Drone Owner"],
+      enum: ["Farmer", "Pilot", "Drone Owner", "Admin"],
       required: true,
     },
     city: {
