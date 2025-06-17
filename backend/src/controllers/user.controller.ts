@@ -211,3 +211,19 @@ export const updateUser = async (req: Request, res: Response) => {
     return;
   }
 };
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await userModel.find().select("-password");
+    res.status(200).json({
+      message: "Users fetched successfully",
+      users,
+    });
+    return;
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    return;
+  }
+};

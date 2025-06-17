@@ -8,6 +8,7 @@ import {
   getDroneDetails,
   getScheduleOfDrone,
   getScheduleOfPilot,
+  updateDroneDetails,
 } from "../controllers/drone.controller";
 
 const router = express.Router();
@@ -19,5 +20,6 @@ router.get("/getAllDroneOfDroneOwner", verifyUser, getAllDroneOfDroneOwner);
 router.get("/getAllDrones", verifyUser, getAllDrones);
 router.get("/getScheduleOfDrone", verifyUser, getScheduleOfDrone);
 router.get("/getScheduleOfPilot", verifyUser, getScheduleOfPilot);
+router.put("/updateDroneDetails/:droneId", verifyUser, updateDroneDetails);
 
 export default router;

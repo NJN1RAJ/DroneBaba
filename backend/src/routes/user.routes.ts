@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getAllUsers,
   getUser,
   loginUser,
   logoutUser,
@@ -15,5 +16,6 @@ router.post("/login", loginUser);
 router.get("/getUser", verifyUser, getUser); //headers required
 router.put("/updateUser", verifyUser, updateUser);
 router.post("/logout", verifyUser, logoutUser); //headers required
+router.get("/getAllUsers", verifyUser, getAllUsers);
 
 export default router;
